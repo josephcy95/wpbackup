@@ -5,53 +5,47 @@
 # Blog: https://josephyap.me
 # --------------------------
 
-# Save logs
-# LOGFILE=$(pwd)/wpbackup.log
-# exec > $LOGFILE 2>&1
-
 # WordPress Installation Path
-WPROOT=/var/www
-#path to create temporary backup folder, must be inside duplicacy initialized folder
-BACKUPPATH=/root/wpbackup/sites
-#timezone and datetime use for backup file prefix
+WPROOT="/var/www"
+# Path to create temporary backup folder; must be inside a duplicacy initialized folder
+BACKUPPATH="/root/wpbackup/sites"
+# Timezone and datetime used for backup file prefix
 CURRTIME=$(TZ="Asia/Singapore" date +"%Y-%m-%d_%H-%M")
 
-# Create array() of domains  listed in $WPROOT
-SITELIST=()
-for DIR in "$WPROOT"/*/ ; do
-    DIR2=${DIR%/}
-    DIR3=${DIR2##*/}
-    if [[ ${DIR3} = *"."* ]]; then
-        SITELIST+=( "$DIR3" )
-    fi
-done
+# Ensure WPROOT and BACKUPPATH Directories Exist
+[ ! -d "$WPROOT" ] && { echo "Error: WPROOT directory $WPROOT does not exist."; exit 1; }
+[ ! -d "$BACKUPPATH" ] && mkdir -p "$BACKUPPATH"
 
-# SITELIST=($(ls -d $WPROOT/* | awk -F '/' '{print $NF}'))
+# Check for wp and duplicacy commands
+command -v wp >/dev/null 2>&1 || { echo >&2 "Error: wp command not found. Aborting."; exit 1; }
+command -v duplicacy >/dev/null 2>&1 || { echo >&2 "Error: duplicacy command not found. Aborting."; exit 1; }
+
+# Create array of domains listed in $WPROOT
+SITELIST=( $(find "$WPROOT" -maxdepth 1 -type d -exec basename {} \;) )
 
 for SITE in "${SITELIST[@]}"; do
-    echo Backing Up "$SITE"
-    cd "$WPROOT/$SITE/htdocs" || exit
+    echo "Backing Up $SITE"
+    if [ ! -e "$WPROOT/$SITE/wp-config.php" ]; then
+        echo "Warning: wp-config.php not found in $WPROOT/$SITE/. Skipping $SITE."
+        continue
+    fi
+
+    cd "$WPROOT/$SITE/htdocs" || { echo "Error: Failed to cd into $WPROOT/$SITE/htdocs. Skipping $SITE."; continue; }
     if [ ! -e "$BACKUPPATH/$SITE" ]; then
         mkdir -p "$BACKUPPATH/$SITE"
     fi
 
     tar -C "$WPROOT/$SITE" -cf - . | zstd > "$BACKUPPATH/$SITE/$CURRTIME-$SITE.tar.zst"
-
-    wp db export "$BACKUPPATH/$SITE/$CURRTIME-$SITE".sql --path="$WPROOT/$SITE/htdocs" --allow-root
-    zstd "$BACKUPPATH/$SITE/$CURRTIME-$SITE".sql -q
-    rm "$BACKUPPATH/$SITE/$CURRTIME-$SITE".sql
-
-    
+    wp db export "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" --path="$WPROOT/$SITE/htdocs" --allow-root
+    zstd "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" -q
+    rm "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql"
 done
 
-# Return to duplicacy directory do backup and remove backup folder when done
-cd $BACKUPPATH/.. || exit
-echo "Total Backup Size: $(du -hs $BACKUPPATH | cut -f 1)"
+# Return to duplicacy directory, do backup, and remove backup folder when done
+cd "$BACKUPPATH/.." || { echo "Error: Failed to cd into $BACKUPPATH/.."; exit 1; }
+echo "Total Backup Size: $(du -hs "$BACKUPPATH" | cut -f 1)"
 duplicacy backup -stats -threads 20
-rm -r $BACKUPPATH
+rm -r "$BACKUPPATH"
 
-# Remove old backup with duplicacy retention policy https://forum.duplicacy.com/t/prune-command-details/1005
+# Remove old backup with duplicacy retention policy
 duplicacy prune -keep 0:360 -keep 30:180 -keep 7:30 -keep 1:7 -threads 20
-
-# Remove unreference chunks
-# duplicacy prune -exhaustive -threads 20

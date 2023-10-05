@@ -1,15 +1,17 @@
 # wpbackup
-Simple script to bulk backup WordPress installations
+Simple shell script to backup WordPress sites installed by WordOps with Duplicacy. By default WordOps puts `wp-config.php` in each sites root folder, if this is not the case then remove the relevant lines that check for it existence.
 
 ## Install duplicacy
 Official CLI Version: `https://github.com/gilbertchen/duplicacy`
 
-```
+
+```bash
 wget https://github.com/gilbertchen/duplicacy/releases/download/v3.2.2/duplicacy_linux_x64_3.2.2
 chmod +x duplicacy_linux_x64_3.2.2
 sudo mv duplicacy_linux_x64_3.2.2 /usr/local/bin/duplicacy
 duplicacy -version
 ```
+
 
 After that initialize it with backup options
 
