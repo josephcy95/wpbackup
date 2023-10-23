@@ -21,3 +21,6 @@ duplicacy init -storage-name scaleway -repository /root/wpbackup wpbackup s3://n
 duplicacy set -key 's3_id' -value 't3vgg3g3'
 duplicacy set -key 's3_secret' -value '3g34g34g43g34g'
 ```
+
+### Rclone & Storj Setup
+Make sure to use Access Grant for Storj, not API keys or S3 credentials to prvent corruption of passphrase
