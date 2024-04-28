@@ -18,6 +18,7 @@ CURRTIME=$(TZ="Asia/Singapore" date +"%Y-%m-%d_%H-%M")
 
 # Check for wp and duplicacy commands
 command -v wp >/dev/null 2>&1 || { echo >&2 "Error: wp command not found. Aborting."; exit 1; }
+command -v duplicacy >/dev/null 2>&1 || { echo >&2 "Error: duplicacy command not found. Aborting."; exit 1; }
 
 # Create array of domains listed in $WPROOT
 SITELIST=( $(find "$WPROOT" -maxdepth 1 -type d -exec basename {} \;) )
@@ -43,8 +44,8 @@ done
 # Return to duplicacy directory, do backup, and remove backup folder when done
 cd "$BACKUPPATH/.." || { echo "Error: Failed to cd into $BACKUPPATH/.."; exit 1; }
 echo "Total Backup Size: $(du -hs "$BACKUPPATH" | cut -f 1)"
-rclone copy /root/wpbackup/sites storj-wpbackup:wpbackup/sites/
+duplicacy backup -stats -threads 20
 rm -r "$BACKUPPATH"
 
 # Remove old backup with duplicacy retention policy
-rclone delete storj-wpbackup:wpbackup/sites/ --min-age 21d
+duplicacy prune -keep 0:360 -keep 30:180 -keep 7:30 -keep 1:7 -threads 20
