@@ -44,6 +44,12 @@ for SITE in "${SITELIST[@]}"; do
     continue
   fi
 
+  # Check if DISABLE_WP_CRON is not defined in wp-config.php (case insensitive)
+  if ! grep -qi "define('DISABLE_WP_CRON', true);" "$WPROOT/$SITE/wp-config.php"; then
+    echo "DISABLE_WP_CRON is not defined in wp-config.php for $SITE. Skipping WP Cron."
+    continue
+  fi
+
   # Run Wp cron
   echo "Running WP Cron for $SITE" >> "$WPCRON_LOG"
   wp cron event run --due-now --path="$WPROOT/$SITE/htdocs" --allow-root >> "$WPCRON_LOG"
