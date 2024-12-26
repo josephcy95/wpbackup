@@ -44,7 +44,7 @@ for SITE in "${SITELIST[@]}"; do
 
     # Sync the site to the backup copy
     rsync -a "$WPROOT/$SITE/" "$BACKUPPATH/$SITE/"
-    wp db export "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" --path="$WPROOT/$SITE/htdocs" --allow-root
+    wp db export "$BACKUPPATH/$SITE/backup-$SITE.sql" --path="$WPROOT/$SITE/htdocs" --allow-root
 
 done
 
