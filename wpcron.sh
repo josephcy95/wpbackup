@@ -34,6 +34,9 @@ fi
 # Run wp cron for all sites
 # ---------------------------
 
+# Add a divider line and timestamp to the log file
+echo -e "\n==========================\nWP Cron Run: $CURRTIME\n==========================" >> "$WPCRON_LOG"
+
 # Create array of sites in the WordPress root directory
 SITELIST=( $(find "$WPROOT" -maxdepth 1 -type d -exec basename {} \;) )
 
@@ -51,7 +54,7 @@ for SITE in "${SITELIST[@]}"; do
       echo "Adding DISABLE_WP_CRON to wp-config.php for $SITE." >> "$WPCRON_LOG"
 
       # Add the line to wp-config.php
-      sed -i "/Add any custom values between this line/a\ \n\ndefine('DISABLE_WP_CRON', true);\n" "$WPROOT/$SITE/wp-config.php"
+      sed -i "/Add any custom values between this line/a\n\ndefine('DISABLE_WP_CRON', true);\n" "$WPROOT/$SITE/wp-config.php"
     else
       echo "DISABLE_WP_CRON is not defined in wp-config.php for $SITE. Skipping WP Cron." >> "$WPCRON_LOG"
       continue
