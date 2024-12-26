@@ -54,7 +54,7 @@ for SITE in "${SITELIST[@]}"; do
       echo "Adding DISABLE_WP_CRON to wp-config.php for $SITE." >> "$WPCRON_LOG"
 
       # Add the line to wp-config.php
-      sed -i "/Add any custom values between this line/a\\n\ndefine('DISABLE_WP_CRON', true);\n" "$WPROOT/$SITE/wp-config.php"
+      sed -i "/Add any custom values between this line/a\\\ndefine('DISABLE_WP_CRON', true);\n" "$WPROOT/$SITE/wp-config.php"
     else
       echo "DISABLE_WP_CRON is not defined in wp-config.php for $SITE. Skipping WP Cron." >> "$WPCRON_LOG"
       continue
