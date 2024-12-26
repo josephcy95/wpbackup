@@ -11,6 +11,7 @@
 WPROOT="/var/www"                                # WordPress installation path
 WPCRON_LOG="/var/log/wpcron.log"               # Log file location
 CURRTIME=$(TZ="Asia/Singapore" date +"%Y-%m-%d_%H-%M")  # Timezone and format
+ADD_DISABLE_WP_CRON=true                        # Add DISABLE_WP_CRON if not defined
 
 # ---------------------------
 # Pre-run check
@@ -38,7 +39,7 @@ SITELIST=( $(find "$WPROOT" -maxdepth 1 -type d -exec basename {} \;) )
 
 for SITE in "${SITELIST[@]}"; do
 
-  # Skip non wordpress site with wordops
+  # Skip non-WordPress sites with WordOps
   if [ ! -e "$WPROOT/$SITE/wp-config.php" ]; then
     echo "Warning: wp-config.php not found in $WPROOT/$SITE/. Skipping $SITE." >> "$WPCRON_LOG"
     continue
@@ -46,8 +47,15 @@ for SITE in "${SITELIST[@]}"; do
 
   # Check if DISABLE_WP_CRON is not defined in wp-config.php (case insensitive)
   if ! grep -qi "define('DISABLE_WP_CRON', true);" "$WPROOT/$SITE/wp-config.php"; then
-    echo "DISABLE_WP_CRON is not defined in wp-config.php for $SITE. Skipping WP Cron."
-    continue
+    if [ "$ADD_DISABLE_WP_CRON" = true ]; then
+      echo "Adding DISABLE_WP_CRON to wp-config.php for $SITE." >> "$WPCRON_LOG"
+
+      # Add the line to wp-config.php
+      sed -i "/Add any custom values between this line/a\ \n\ndefine('DISABLE_WP_CRON', true);\n" "$WPROOT/$SITE/wp-config.php"
+    else
+      echo "DISABLE_WP_CRON is not defined in wp-config.php for $SITE. Skipping WP Cron." >> "$WPCRON_LOG"
+      continue
+    fi
   fi
 
   # Run Wp cron
