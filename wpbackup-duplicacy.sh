@@ -42,7 +42,7 @@ for SITE in "${SITELIST[@]}"; do
         mkdir -p "$BACKUPPATH/$SITE"
     fi
 
-    # Sync the site to the backup copy 
+    # Sync the site to the backup copy
     rsync -a "$WPROOT/$SITE/" "$BACKUPPATH/$SITE/"
     wp db export "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" --path="$WPROOT/$SITE/htdocs" --allow-root
 
@@ -51,8 +51,7 @@ done
 # Return to duplicacy directory, do backup, and remove backup folder when done
 cd "$BACKUPPATH/.." || { echo "Error: Failed to cd into $BACKUPPATH/.."; exit 1; }
 echo "Total Backup Size: $(du -hs "$BACKUPPATH" | cut -f 1)"
-duplicacy backup -stats -threads 20
-rm -r "$BACKUPPATH"
+duplicacy backup -stats
 
 # Remove old backup with duplicacy retention policy
-duplicacy prune -keep 0:360 -keep 30:180 -keep 7:30 -keep 1:7 -threads 20
+duplicacy prune -keep 0:360 -keep 30:180 -keep 7:30 -keep 1:7
