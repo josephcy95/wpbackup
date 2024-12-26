@@ -5,6 +5,13 @@
 # Blog: https://josephyap.me
 # --------------------------
 
+# --------------------------
+# This script use duplicacy for smaller backup storage needs, faster backup,
+# but require to maintain a complete copy of the wordpress sites,
+# so double the storage space of the wordpress size.
+# --------------------------
+
+
 # WordPress Installation Path
 WPROOT="/var/www"
 # Path to create temporary backup folder; must be inside a duplicacy initialized folder
@@ -35,10 +42,10 @@ for SITE in "${SITELIST[@]}"; do
         mkdir -p "$BACKUPPATH/$SITE"
     fi
 
-    tar -C "$WPROOT/$SITE" -cf - . | zstd > "$BACKUPPATH/$SITE/$CURRTIME-$SITE.tar.zst"
+    # Sync the site to the backup copy 
+    rsync -a "$WPROOT/$SITE/" "$BACKUPPATH/$SITE/"
     wp db export "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" --path="$WPROOT/$SITE/htdocs" --allow-root
-    zstd "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql" -q
-    rm "$BACKUPPATH/$SITE/$CURRTIME-$SITE.sql"
+
 done
 
 # Return to duplicacy directory, do backup, and remove backup folder when done
